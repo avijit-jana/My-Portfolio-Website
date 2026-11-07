@@ -48,7 +48,7 @@ function initUnifiedScroll() {
 
     // 2. Back-to-top button visibility (DOM updated only on state flip)
     if (backToTopBtn) {
-      const shouldBeVisible = scrollY > 280;
+      const shouldBeVisible = scrollY > 200;
       if (shouldBeVisible !== isBackToTopVisible) {
         isBackToTopVisible = shouldBeVisible;
         backToTopBtn.classList.toggle('visible', isBackToTopVisible);
