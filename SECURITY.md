@@ -10,7 +10,7 @@ Only the following versions of this repository currently receive security update
 
 | Version | Supported |
 | ------- | --------- |
-| `main`  | ✅ Yes     |
+| `main`  | ✅ Yes    |
 
 All other branches or forks should be considered unsupported.
 
@@ -23,13 +23,13 @@ If you discover a security issue, please follow **responsible disclosure** pract
 1. **Do not open a public GitHub issue or discussion.**
 2. Send a detailed report via LinkedIn:
 
-   **🔗 [Avijit Jana](https://www.linkedin.com/in/avijit-jana/)
-3. Include the following information in your report:
+   **🔗 [Avijit Jana](https://www.linkedin.com/in/avijit-jana/)**
 
-   * Steps to reproduce the vulnerability
-   * Affected endpoints, files, or components
-   * Potential impact (data exposure, privilege escalation, etc.)
-   * Any proof-of-concept code (if available)
+3. Include the following information in your report:
+   - Steps to reproduce the vulnerability
+   - Affected endpoints, files, or components
+   - Potential impact (data exposure, privilege escalation, etc.)
+   - Any proof-of-concept code (if available)
 
 We aim to acknowledge valid reports within **48 hours**.
 
@@ -37,9 +37,9 @@ We aim to acknowledge valid reports within **48 hours**.
 
 ## ⏳ Disclosure & Fix Timeline
 
-* Verified vulnerabilities are typically addressed within **30 days**.
-* Once fixed, a security advisory may be published.
-* Reporters will be credited unless anonymity is requested.
+- Verified vulnerabilities are typically addressed within **30 days**.
+- Once fixed, a security advisory may be published.
+- Reporters will be credited unless anonymity is requested.
 
 ---
 
@@ -47,14 +47,14 @@ We aim to acknowledge valid reports within **48 hours**.
 
 This security policy applies only to:
 
-* Code hosted in this repository
-* The default `main` branch
+- Code hosted in this repository
+- The default `main` branch
 
 It does **not** cover:
 
-* Forks or downstream derivatives
-* Local deployments or misconfigurations
-* Third-party dependencies (please report those upstream)
+- Forks or downstream derivatives
+- Local deployments or misconfigurations
+- Third-party dependencies (please report those upstream)
 
 ---
 
@@ -68,8 +68,8 @@ Thank you for helping keep this project and its users safe.
 
 ---
 
-<div align="middle">
+<div align="center">
 
-![Badge](https://img.shields.io/badge/Developed%20By-Avijit_Jana-navy?style=for-the-badge)
+[![Developed by Avijit Jana](https://img.shields.io/badge/DEVELOPED%20BY-AVIJIT%20JANA-0938BD?style=for-the-badge&logo=github&logoColor=white)](https://github.com/avijit-jana)
 
 </div>

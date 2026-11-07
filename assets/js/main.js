@@ -1,10 +1,14 @@
 // assets/js/main.js
 // ES module. Modern browsers supported by GitHub Pages.
 import { fixGrammar } from './grammer.js';
+
 // Responsibilities:
-// - Load projects.json and render filterable/sortable 3x3 project grid (max 9 shown)
-// - Lightweight accessibility helpers, smooth browsing, and floating back-to-top tool
-// - Contact mailto handler
+// - High-performance scroll tracking (progress bar + back-to-top via RAF compositor transform)
+// - Layout-thrashing-free active navigation spy using IntersectionObserver
+// - Fast projects loader with precomputed search index & DocumentFragment batch rendering
+// - Visibility-aware dynamic hero greeting (pauses off-screen to preserve CPU/battery)
+// - Mobile navigation with smooth anchor scrolling
+// - Contact mailto & grammar helper with timeout safety
 
 const PROJECTS_JSON = './assets/js/projects.json';
 const MAX_PROJECTS_DISPLAY = 9; // 3x3 grid
@@ -14,80 +18,58 @@ let allProjects = [];
 document.addEventListener('DOMContentLoaded', () => {
   initNavToggle();
   initThemeToggle();
-  initScrollProgress();
+  initUnifiedScroll();
   initActiveNav();
   loadProjects();
   initContactForm();
   initDynamicGreeting();
-  initFooter();
+  initFooterYear();
 });
 
 /* =============================================
-   SCROLL PROGRESS BAR (OPTIMIZED)
+   UNIFIED SCROLL & BACK-TO-TOP (RAF & COMPOSITOR OPTIMIZED)
    ============================================= */
-function initScrollProgress() {
+function initUnifiedScroll() {
   const progressBar = document.getElementById('scrollProgress');
-  if (!progressBar) return;
+  const backToTopBtn = document.getElementById('backToTop');
 
-  window.addEventListener('scroll', () => {
-    const winScroll = document.body.scrollTop || document.documentElement.scrollTop;
-    const height = document.documentElement.scrollHeight - document.documentElement.clientHeight;
-    const scrolled = height > 0 ? (winScroll / height) * 100 : 0;
-    progressBar.style.width = scrolled + '%';
-  }, { passive: true });
-}
+  let isBackToTopVisible = false;
+  let scrollTicking = false;
 
-/* =============================================
-   ACTIVE NAV HIGHLIGHTING (SMOOTH SCROLL SPY)
-   ============================================= */
-function initActiveNav() {
-  const sections = document.querySelectorAll('section[id]');
-  const navLinks = document.querySelectorAll('.nav-list a');
-  if (!sections.length || !navLinks.length) return;
+  function updateScrollState() {
+    const scrollY = window.scrollY || document.documentElement.scrollTop;
 
-  window.addEventListener('scroll', () => {
-    let current = '';
-    const scrollPos = window.scrollY + 120; // Offset for header height
+    // 1. GPU-composited scroll progress bar (transform: scaleX)
+    if (progressBar) {
+      const scrollHeight = document.documentElement.scrollHeight - window.innerHeight;
+      const progress = scrollHeight > 0 ? Math.min(1, Math.max(0, scrollY / scrollHeight)) : 0;
+      progressBar.style.transform = `scaleX(${progress})`;
+    }
 
-    sections.forEach(section => {
-      const sectionTop = section.offsetTop;
-      const sectionHeight = section.offsetHeight;
-      if (scrollPos >= sectionTop && scrollPos < sectionTop + sectionHeight) {
-        current = section.getAttribute('id');
+    // 2. Back-to-top button visibility (DOM updated only on state flip)
+    if (backToTopBtn) {
+      const shouldBeVisible = scrollY > 280;
+      if (shouldBeVisible !== isBackToTopVisible) {
+        isBackToTopVisible = shouldBeVisible;
+        backToTopBtn.classList.toggle('visible', isBackToTopVisible);
       }
-    });
+    }
 
-    navLinks.forEach(link => {
-      link.classList.remove('active');
-      if (link.getAttribute('href') === `#${current}`) {
-        link.classList.add('active');
-      }
-    });
-  }, { passive: true });
-}
-
-/* =============================================
-   FOOTER: Date and Floating Back to Top Tool
-   ============================================= */
-function initFooter() {
-  const yearEl = document.getElementById('year');
-  if (yearEl) {
-    yearEl.textContent = new Date().getFullYear();
+    scrollTicking = false;
   }
 
-  const backToTopBtn = document.getElementById('backToTop');
+  window.addEventListener('scroll', () => {
+    if (!scrollTicking) {
+      requestAnimationFrame(updateScrollState);
+      scrollTicking = true;
+    }
+  }, { passive: true });
+
+  // Initial call
+  updateScrollState();
+
+  // Smooth scroll back to top handler
   if (backToTopBtn) {
-    const toggleBackToTop = () => {
-      if (window.scrollY > 280) {
-        backToTopBtn.classList.add('visible');
-      } else {
-        backToTopBtn.classList.remove('visible');
-      }
-    };
-
-    window.addEventListener('scroll', toggleBackToTop, { passive: true });
-    toggleBackToTop();
-
     backToTopBtn.addEventListener('click', (e) => {
       e.preventDefault();
       window.scrollTo({
@@ -95,6 +77,63 @@ function initFooter() {
         behavior: 'smooth'
       });
     });
+  }
+}
+
+/* =============================================
+   ACTIVE NAV HIGHLIGHTING (INTERSECTION OBSERVER - ZERO REFLOW)
+   ============================================= */
+function initActiveNav() {
+  const sections = document.querySelectorAll('section[id]');
+  const navLinks = document.querySelectorAll('.nav-list a');
+  if (!sections.length || !navLinks.length) return;
+
+  const linkMap = new Map();
+  navLinks.forEach(link => {
+    const href = link.getAttribute('href');
+    if (href && href.startsWith('#')) {
+      linkMap.set(href.slice(1), link);
+    }
+  });
+
+  let currentActiveId = '';
+
+  function setActiveNav(id) {
+    if (currentActiveId === id) return;
+    currentActiveId = id;
+
+    navLinks.forEach(link => link.classList.remove('active'));
+    const targetLink = linkMap.get(id);
+    if (targetLink) {
+      targetLink.classList.add('active');
+    }
+  }
+
+  if ('IntersectionObserver' in window) {
+    // High-performance threshold detection without querying offsetTop/offsetHeight on scroll
+    const observer = new IntersectionObserver((entries) => {
+      // Find the most visible intersecting section
+      entries.forEach(entry => {
+        if (entry.isIntersecting) {
+          setActiveNav(entry.target.id);
+        }
+      });
+    }, {
+      rootMargin: '-20% 0px -65% 0px',
+      threshold: 0
+    });
+
+    sections.forEach(section => observer.observe(section));
+  }
+}
+
+/* =============================================
+   FOOTER: Dynamic Current Year
+   ============================================= */
+function initFooterYear() {
+  const yearEl = document.getElementById('year');
+  if (yearEl) {
+    yearEl.textContent = new Date().getFullYear();
   }
 }
 
@@ -112,11 +151,6 @@ function initThemeToggle() {
   if (btn) {
     btn.style.display = 'none';
   }
-}
-
-function updateThemeIcon(btn) {
-  if (!btn) return;
-  btn.style.display = 'none';
 }
 
 /* =============================================
@@ -251,14 +285,26 @@ function initContactForm() {
    ============================================= */
 async function loadProjects() {
   try {
-    const res = await fetch(PROJECTS_JSON, { cache: 'no-cache' });
+    const res = await fetch(PROJECTS_JSON);
     if (!res.ok) {
       throw new Error(`HTTP error! status: ${res.status}`);
     }
-    allProjects = await res.json();
-    if (!Array.isArray(allProjects)) {
+    const data = await res.json();
+    if (!Array.isArray(data)) {
       allProjects = [];
+    } else {
+      // Precompute normalized search index on each project for instantaneous search
+      allProjects = data.map(p => ({
+        ...p,
+        _search: [
+          p.title || '',
+          p.description || '',
+          ...(p.tech || []),
+          ...(p.domains || [])
+        ].join(' ').toLowerCase()
+      }));
     }
+
     renderProjects(allProjects.slice(0, MAX_PROJECTS_DISPLAY));
     buildTagFilters(allProjects);
     initProjectSearch();
@@ -272,7 +318,7 @@ async function loadProjects() {
   }
 }
 
-/* RENDER PROJECTS: 3x3 GitHub Style Cards */
+/* RENDER PROJECTS: DocumentFragment Batch Insertion */
 function renderProjects(projects) {
   const grid = document.getElementById('projectsGrid');
   if (!grid) return;
@@ -290,19 +336,26 @@ function renderProjects(projects) {
     return;
   }
 
+  const fragment = document.createDocumentFragment();
+
   projects.forEach((p, index) => {
     const card = document.createElement('article');
     card.className = 'project-card';
     card.tabIndex = 0;
     card.style.animationDelay = `${index * 0.04}s`;
+    
+    const imgSrc = p.image || './assets/images/placeholder-project.png';
+    const linkUrl = p.url || p.repo || '#';
+    const targetAttr = p.external ? '_blank' : '_self';
+
     card.innerHTML = `
-      <a class="project-media" href="${p.url || p.repo || '#'}" aria-label="${escapeHtml(p.title)} - open project" target="${p.external ? '_blank' : '_self'}" rel="noopener">
-        <img loading="${index < 3 ? 'eager' : 'lazy'}" width="400" height="225" decoding="async" alt="${escapeHtml(p.imageAlt || p.title)}" src="${p.image || './assets/images/placeholder-project.png'}" />
+      <a class="project-media" href="${linkUrl}" aria-label="${escapeHtml(p.title)} - open project" target="${targetAttr}" rel="noopener">
+        <img loading="${index < 3 ? 'eager' : 'lazy'}" width="400" height="225" decoding="async" alt="${escapeHtml(p.imageAlt || p.title)}" src="${imgSrc}" onerror="this.onerror=null;this.src='./assets/images/placeholder-project.png';" />
       </a>
       <div class="project-body">
         <div class="project-title-row">
           <i class="fa-brands fa-github repo-mark" aria-hidden="true"></i>
-          <h3><a href="${p.url || p.repo || '#'}" target="${p.external ? '_blank' : '_self'}" rel="noopener">${escapeHtml(p.title)}</a></h3>
+          <h3><a href="${linkUrl}" target="${targetAttr}" rel="noopener">${escapeHtml(p.title)}</a></h3>
         </div>
         <p class="proj-desc">${escapeHtml(p.description)}</p>
         <div class="project-meta">
@@ -316,14 +369,16 @@ function renderProjects(projects) {
         </div>
       </div>
     `;
-    grid.appendChild(card);
+    fragment.appendChild(card);
   });
+
+  grid.appendChild(fragment);
 
   // Attach event delegation for tag clicks once to prevent listener leaks
   if (!grid.dataset.listenerAttached) {
     grid.addEventListener('click', e => {
       const t = e.target.closest('.tag');
-      if (t) {
+      if (t && t.dataset.tag) {
         e.preventDefault();
         applyTagFilter(t.dataset.tag);
       }
@@ -340,8 +395,9 @@ function buildTagFilters(projects) {
   if (!container) return;
 
   container.innerHTML = '';
+  const fragment = document.createDocumentFragment();
 
-  // Only show top 6 tags to keep it clean
+  // Show top 6 tags
   const sortedTags = Array.from(unique).sort().slice(0, 6);
 
   sortedTags.forEach(tag => {
@@ -351,16 +407,25 @@ function buildTagFilters(projects) {
     btn.setAttribute('data-tag', tag);
     btn.type = 'button';
     btn.addEventListener('click', () => applyTagFilter(tag));
-    container.appendChild(btn);
+    fragment.appendChild(btn);
   });
+
+  container.appendChild(fragment);
 }
 
-/* Apply tag filter: highlights tag and filters grid */
+/* Apply tag filter: toggles tag active state and filters grid */
 function applyTagFilter(tag) {
   const search = document.getElementById('project-search');
   if (search) {
-    search.value = tag;
-    filterProjects(tag);
+    const isAlreadyActive = search.value.trim().toLowerCase() === tag.toLowerCase();
+    const newQuery = isAlreadyActive ? '' : tag;
+    search.value = newQuery;
+    filterProjects(newQuery);
+
+    const tagBtns = document.querySelectorAll('.tag-filters .tag');
+    tagBtns.forEach(btn => {
+      btn.classList.toggle('active', !isAlreadyActive && btn.dataset.tag === tag);
+    });
   }
 }
 
@@ -371,41 +436,50 @@ window.clearSearch = function () {
     search.value = '';
     filterProjects('');
   }
+  const tagBtns = document.querySelectorAll('.tag-filters .tag');
+  tagBtns.forEach(btn => btn.classList.remove('active'));
 };
 
-/* Project search input handler */
+/* Project search input handler (debounced) */
 function initProjectSearch() {
   const input = document.getElementById('project-search');
   if (!input) return;
 
-  let debounceTimer;
+  let debounceTimer = null;
 
   input.addEventListener('input', () => {
     clearTimeout(debounceTimer);
     debounceTimer = setTimeout(() => {
       filterProjects(input.value);
-    }, 200);
+      const val = input.value.trim().toLowerCase();
+      const tagBtns = document.querySelectorAll('.tag-filters .tag');
+      tagBtns.forEach(btn => {
+        btn.classList.toggle('active', Boolean(val && btn.dataset.tag && btn.dataset.tag.toLowerCase() === val));
+      });
+    }, 180);
   });
 
-  // Allow Enter key to search
   input.addEventListener('keydown', (e) => {
     if (e.key === 'Enter') {
       e.preventDefault();
+      clearTimeout(debounceTimer);
       filterProjects(input.value);
+      const val = input.value.trim().toLowerCase();
+      const tagBtns = document.querySelectorAll('.tag-filters .tag');
+      tagBtns.forEach(btn => {
+        btn.classList.toggle('active', Boolean(val && btn.dataset.tag && btn.dataset.tag.toLowerCase() === val));
+      });
     }
   });
 }
 
-/* Filter logic - shows max 9 matching projects in 3x3 grid */
+/* High-speed Filter using precomputed index */
 function filterProjects(query = '') {
   const normalized = (query || '').trim().toLowerCase();
 
   let filtered;
   if (normalized && Array.isArray(allProjects)) {
-    filtered = allProjects.filter(p => {
-      const hay = [p.title, p.description, ...(p.tech || []), ...(p.domains || [])].join(' ').toLowerCase();
-      return hay.includes(normalized);
-    });
+    filtered = allProjects.filter(p => p._search.includes(normalized));
   } else {
     filtered = allProjects || [];
   }
@@ -441,114 +515,63 @@ function escapeHtml(str = '') {
 }
 
 /* =============================================
-   DYNAMIC TYPEWRITER: Block cursor, synced badges & sub-headline
+   DYNAMIC TYPEWRITER (VISIBILITY AWARE - ZERO BACKGROUND LOAD)
    ============================================= */
 function initDynamicGreeting() {
   const nounEl = document.getElementById('dynamic-noun');
   if (!nounEl) return;
 
-  // Phrase config: noun, color, subtitle, active badge index
   const phrases = [
-    {
-      noun: "Data Scientist",
-      color: "#3b82f6",
-      subtitle: "Building production-ready ML systems and data-driven insights.",
-      badgeIndex: 0,
-      badgeIcon: "fa-solid fa-brain",
-      badgeText: "End-to-End MLOps"
-    },
-    {
-      noun: "ML Engineer",
-      color: "#a855f7",
-      subtitle: "Designing scalable machine learning pipelines for production.",
-      badgeIndex: 1,
-      badgeIcon: "fa-solid fa-robot",
-      badgeText: "RAG & LLM Apps"
-    },
-    {
-      noun: "Problem Solver",
-      color: "#22c55e",
-      subtitle: "Turning complex data challenges into measurable business value.",
-      badgeIndex: 2,
-      badgeIcon: "fa-solid fa-cloud",
-      badgeText: "AWS Cloud"
-    },
-    {
-      noun: "Agent Builder",
-      color: "#f97316",
-      subtitle: "Building autonomous AI agents for complex workflows.",
-      badgeIndex: 0,
-      badgeIcon: "fa-solid fa-robot",
-      badgeText: "Agent Builder"
-    },
-    {
-      noun: "Data Analyst",
-      color: "#3b82f6",
-      subtitle: "Transforming complex data into actionable business insights.",
-      badgeIndex: 0,
-      badgeIcon: "fa-solid fa-chart-line",
-      badgeText: "Data Visualization"
-    },
+    { noun: "Production MLOps", color: "#3b82f6", badgeIndex: 0 },
+    { noun: "RAG & LLM Architect", color: "#a855f7", badgeIndex: 1 },
+    { noun: "Cloud AI Infrastructure", color: "#22c55e", badgeIndex: 2 },
+    { noun: "Autonomous Agents", color: "#06b6d4", badgeIndex: 1 },
+    { noun: "Scalable Data Systems", color: "#3b82f6", badgeIndex: 0 },
   ];
 
   const typeSpeed = 70;
   const deleteSpeed = 35;
-  const pauseAfterType = 2500;
+  const pauseAfterType = 2400;
   const pauseBeforeDelete = 400;
 
   let phraseIndex = 0;
   let charIndex = 0;
   let isDeleting = false;
   let isPaused = false;
+  let typeTimer = null;
+  let isHeroVisible = true;
 
   // Set up DOM: typewriter text + block cursor
   nounEl.innerHTML = '<span class="typewriter-text"></span><span class="block-cursor"></span>';
   const textEl = nounEl.querySelector('.typewriter-text');
   if (!textEl) return;
 
-  const subtitleEl = document.getElementById('heroSubtitle');
   const badgeGrid = document.getElementById('heroBadgeGrid');
 
-  // Initially sync to first phrase
   syncPhrase(0);
 
   function syncPhrase(index) {
     const phrase = phrases[index];
     if (!phrase) return;
 
-    // Update accent color
     nounEl.style.color = phrase.color;
 
-    // Sync subtitle with fade effect
-    if (subtitleEl) {
-      subtitleEl.style.opacity = '0';
-      subtitleEl.style.transform = 'translateY(10px)';
-      setTimeout(() => {
-        if (subtitleEl) {
-          subtitleEl.textContent = phrase.subtitle;
-          subtitleEl.style.opacity = '1';
-          subtitleEl.style.transform = 'translateY(0)';
-        }
-      }, 200);
-    }
-
-    // Sync badge grid — highlight active, update icon+text
     if (badgeGrid) {
       const badges = badgeGrid.querySelectorAll('.hero-badge-item');
       badges.forEach((badge, i) => {
-        badge.classList.remove('active');
-        if (i === phrase.badgeIndex) {
-          badge.classList.add('active');
-          const icon = badge.querySelector('i');
-          const span = badge.querySelector('span');
-          if (icon) icon.className = phrase.badgeIcon;
-          if (span) span.textContent = phrase.badgeText;
-        }
+        badge.classList.toggle('active', i === phrase.badgeIndex);
       });
     }
   }
 
   function typeWriter() {
+    clearTimeout(typeTimer);
+
+    // If hero is scrolled out of view or tab is hidden, stop running
+    if (!isHeroVisible || document.hidden) {
+      return;
+    }
+
     if (!textEl) return;
     const currentPhrase = phrases[phraseIndex];
     if (!currentPhrase) return;
@@ -559,28 +582,51 @@ function initDynamicGreeting() {
       if (charIndex < currentPhrase.noun.length) {
         textEl.textContent = currentPhrase.noun.substring(0, charIndex + 1);
         charIndex++;
-        setTimeout(typeWriter, typeSpeed);
+        typeTimer = setTimeout(typeWriter, typeSpeed);
       } else {
         isPaused = true;
-        setTimeout(() => {
+        typeTimer = setTimeout(() => {
           isPaused = false;
           isDeleting = true;
-          setTimeout(typeWriter, pauseBeforeDelete);
+          typeTimer = setTimeout(typeWriter, pauseBeforeDelete);
         }, pauseAfterType);
       }
     } else {
       if (charIndex > 0) {
         textEl.textContent = currentPhrase.noun.substring(0, charIndex - 1);
         charIndex--;
-        setTimeout(typeWriter, deleteSpeed);
+        typeTimer = setTimeout(typeWriter, deleteSpeed);
       } else {
         isDeleting = false;
         phraseIndex = (phraseIndex + 1) % phrases.length;
         syncPhrase(phraseIndex);
-        setTimeout(typeWriter, typeSpeed);
+        typeTimer = setTimeout(typeWriter, typeSpeed);
       }
     }
   }
+
+  // IntersectionObserver to pause typewriter when hero is off-screen
+  const heroSection = document.querySelector('.hero-section');
+  if ('IntersectionObserver' in window && heroSection) {
+    const observer = new IntersectionObserver((entries) => {
+      isHeroVisible = entries[0].isIntersecting;
+      if (isHeroVisible && !document.hidden) {
+        typeWriter();
+      } else {
+        clearTimeout(typeTimer);
+      }
+    }, { threshold: 0.05 });
+    observer.observe(heroSection);
+  }
+
+  // Page visibility to pause when browser tab is inactive
+  document.addEventListener('visibilitychange', () => {
+    if (document.hidden) {
+      clearTimeout(typeTimer);
+    } else if (isHeroVisible) {
+      typeWriter();
+    }
+  }, { passive: true });
 
   typeWriter();
 }

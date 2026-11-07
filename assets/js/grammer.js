@@ -4,15 +4,21 @@
 const CONFIG = {
     API_URL: "https://api.languagetool.org/v2/check",
     CACHE_TTL: 1000 * 60 * 10, // 10 minutes
+    MAX_CACHE_SIZE: 50,
+    TIMEOUT_MS: 8000,
     CHUNK_SIZE: 500,
 };
 
 // ==============================
-// CACHE (TTL BASED)
+// CACHE (TTL & BOUNDED SIZE)
 // ==============================
 const cache = new Map();
 
 function setCache(key, value) {
+    if (cache.size >= CONFIG.MAX_CACHE_SIZE) {
+        const oldestKey = cache.keys().next().value;
+        if (oldestKey) cache.delete(oldestKey);
+    }
     cache.set(key, {
         value,
         expiry: Date.now() + CONFIG.CACHE_TTL,
@@ -44,8 +50,7 @@ export async function fixGrammar(text, language = "en-US") {
     try {
         // 2. SPLIT LARGE TEXT
         const chunks = splitIntoChunks(text);
-
-        let results = [];
+        const results = [];
 
         for (const chunk of chunks) {
             const corrected = await processChunk(chunk, language);
@@ -53,7 +58,6 @@ export async function fixGrammar(text, language = "en-US") {
         }
 
         const finalText = results.join("");
-
         setCache(text, finalText);
         return finalText;
 
@@ -77,46 +81,47 @@ async function processChunk(text, language) {
 }
 
 // ==============================
-// LANGUAGE TOOL API CALL
+// LANGUAGE TOOL API CALL (WITH TIMEOUT)
 // ==============================
 async function callLanguageTool(text, language) {
-    const response = await fetch(CONFIG.API_URL, {
-        method: "POST",
-        headers: {
-            "Content-Type": "application/x-www-form-urlencoded",
-        },
-        body: new URLSearchParams({ text, language }),
-    });
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), CONFIG.TIMEOUT_MS);
 
-    if (!response.ok) {
-        throw new Error(`API failed: ${response.status}`);
+    try {
+        const response = await fetch(CONFIG.API_URL, {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/x-www-form-urlencoded",
+            },
+            body: new URLSearchParams({ text, language }),
+            signal: controller.signal
+        });
+
+        if (!response.ok) {
+            throw new Error(`API failed: ${response.status}`);
+        }
+
+        return await response.json();
+    } finally {
+        clearTimeout(timer);
     }
-
-    return await response.json();
 }
 
 // ==============================
-// APPLY CORRECTIONS
+// APPLY CORRECTIONS (OPTIMIZED STRING SLICE)
 // ==============================
 function applyCorrections(text, matches) {
     // Sort descending → prevents offset shifting bugs
-    matches.sort((a, b) => b.offset - a.offset);
+    const sorted = [...matches].sort((a, b) => b.offset - a.offset);
 
-    let corrected = [...text];
-
-    for (const match of matches) {
+    let result = text;
+    for (const match of sorted) {
         if (!match.replacements?.length) continue;
-
         const replacement = chooseBestReplacement(match);
-
-        corrected.splice(
-            match.offset,
-            match.length,
-            ...replacement.split("")
-        );
+        result = result.slice(0, match.offset) + replacement + result.slice(match.offset + match.length);
     }
 
-    return corrected.join("");
+    return result;
 }
 
 // ==============================
@@ -126,9 +131,7 @@ function chooseBestReplacement(match) {
     const replacements = match.replacements;
 
     // Prefer shortest (usually safest correction)
-    return replacements.sort((a, b) => {
-        return a.value.length - b.value.length;
-    })[0].value;
+    return replacements.sort((a, b) => a.value.length - b.value.length)[0].value;
 }
 
 // ==============================
