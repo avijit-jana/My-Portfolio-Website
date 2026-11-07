@@ -2,14 +2,12 @@
 // ES module. Modern browsers supported by GitHub Pages.
 import { fixGrammar } from './grammer.js';
 // Responsibilities:
-// - Load projects.json and render filterable/sortable project grid (max 8 shown)
-// - Load posts.json and render blog teasers (latest 3 only)
-// - Lightweight accessibility helpers and contact mailto fallback
-// - Theme toggle support
+// - Load projects.json and render filterable/sortable 3x3 project grid (max 9 shown)
+// - Lightweight accessibility helpers, smooth browsing, and floating back-to-top tool
+// - Contact mailto handler
 
-const PROJECTS_JSON = 'assets/js/projects.json';
-const POSTS_JSON = 'assets/js/posts.json';
-const MAX_PROJECTS_DISPLAY = 8; // 4x2 grid
+const PROJECTS_JSON = './assets/js/projects.json';
+const MAX_PROJECTS_DISPLAY = 9; // 3x3 grid
 
 let allProjects = [];
 
@@ -19,14 +17,13 @@ document.addEventListener('DOMContentLoaded', () => {
   initScrollProgress();
   initActiveNav();
   loadProjects();
-  loadBlogTeasers();
   initContactForm();
   initDynamicGreeting();
   initFooter();
 });
 
 /* =============================================
-   SCROLL PROGRESS BAR
+   SCROLL PROGRESS BAR (OPTIMIZED)
    ============================================= */
 function initScrollProgress() {
   const progressBar = document.getElementById('scrollProgress');
@@ -35,21 +32,22 @@ function initScrollProgress() {
   window.addEventListener('scroll', () => {
     const winScroll = document.body.scrollTop || document.documentElement.scrollTop;
     const height = document.documentElement.scrollHeight - document.documentElement.clientHeight;
-    const scrolled = (winScroll / height) * 100;
+    const scrolled = height > 0 ? (winScroll / height) * 100 : 0;
     progressBar.style.width = scrolled + '%';
-  });
+  }, { passive: true });
 }
 
 /* =============================================
-   ACTIVE NAV HIGHLIGHTING
+   ACTIVE NAV HIGHLIGHTING (SMOOTH SCROLL SPY)
    ============================================= */
 function initActiveNav() {
   const sections = document.querySelectorAll('section[id]');
   const navLinks = document.querySelectorAll('.nav-list a');
+  if (!sections.length || !navLinks.length) return;
 
   window.addEventListener('scroll', () => {
     let current = '';
-    const scrollPos = window.scrollY + 100; // Offset for header height
+    const scrollPos = window.scrollY + 120; // Offset for header height
 
     sections.forEach(section => {
       const sectionTop = section.offsetTop;
@@ -65,13 +63,11 @@ function initActiveNav() {
         link.classList.add('active');
       }
     });
-
-    // Special case for blog page link (don't highlight if on index unless it's a section)
-  });
+  }, { passive: true });
 }
 
 /* =============================================
-   FOOTER: Date and Back to Top
+   FOOTER: Date and Floating Back to Top Tool
    ============================================= */
 function initFooter() {
   const yearEl = document.getElementById('year');
@@ -81,7 +77,19 @@ function initFooter() {
 
   const backToTopBtn = document.getElementById('backToTop');
   if (backToTopBtn) {
-    backToTopBtn.addEventListener('click', () => {
+    const toggleBackToTop = () => {
+      if (window.scrollY > 280) {
+        backToTopBtn.classList.add('visible');
+      } else {
+        backToTopBtn.classList.remove('visible');
+      }
+    };
+
+    window.addEventListener('scroll', toggleBackToTop, { passive: true });
+    toggleBackToTop();
+
+    backToTopBtn.addEventListener('click', (e) => {
+      e.preventDefault();
       window.scrollTo({
         top: 0,
         behavior: 'smooth'
@@ -91,42 +99,28 @@ function initFooter() {
 }
 
 /* =============================================
-   THEME TOGGLE
+   THEME ENFORCEMENT (DARK MODE ONLY)
    ============================================= */
 function initThemeToggle() {
+  document.body.classList.remove('theme-light');
+  document.body.classList.add('theme-dark');
+  try {
+    localStorage.setItem('theme', 'theme-dark');
+  } catch (_) {}
+
   const btn = document.getElementById('themeToggle');
-  if (!btn) return;
-
-  // Check for saved preference or system preference
-  const savedTheme = localStorage.getItem('theme');
-  const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-
-  if (savedTheme) {
-    document.body.className = savedTheme;
-  } else if (prefersDark) {
-    document.body.className = 'theme-dark';
+  if (btn) {
+    btn.style.display = 'none';
   }
-
-  updateThemeIcon(btn);
-
-  btn.addEventListener('click', () => {
-    const isDark = document.body.classList.contains('theme-dark');
-    document.body.className = isDark ? 'theme-light' : 'theme-dark';
-    localStorage.setItem('theme', document.body.className);
-    updateThemeIcon(btn);
-  });
 }
 
 function updateThemeIcon(btn) {
-  const isDark = document.body.classList.contains('theme-dark');
-  btn.innerHTML = isDark
-    ? '<i class="fa-solid fa-sun" aria-hidden="true"></i>'
-    : '<i class="fa-solid fa-moon" aria-hidden="true"></i>';
-  btn.setAttribute('aria-label', isDark ? 'Switch to light mode' : 'Switch to dark mode');
+  if (!btn) return;
+  btn.style.display = 'none';
 }
 
 /* =============================================
-   NAV TOGGLE (mobile)
+   NAV TOGGLE (mobile & smooth anchor scrolls)
    ============================================= */
 function initNavToggle() {
   const btn = document.querySelector('.nav-toggle');
@@ -147,9 +141,21 @@ function initNavToggle() {
     }
   });
 
-  // Close menu when clicking a link
+  // Close menu and smooth scroll when clicking a link
   nav.querySelectorAll('a').forEach(link => {
-    link.addEventListener('click', () => {
+    link.addEventListener('click', (e) => {
+      const href = link.getAttribute('href');
+      if (href && href.startsWith('#') && href.length > 1) {
+        try {
+          const target = document.querySelector(href);
+          if (target) {
+            e.preventDefault();
+            target.scrollIntoView({ behavior: 'smooth' });
+          }
+        } catch (_) {
+          // Fallback to default browser anchor behavior
+        }
+      }
       btn.setAttribute('aria-expanded', 'false');
       nav.classList.remove('open');
     });
@@ -165,72 +171,44 @@ function initContactForm() {
   statusEl.id = 'formStatus';
   statusEl.style.marginTop = '1rem';
   statusEl.style.padding = '0.75rem';
-  statusEl.style.borderRadius = '4px';
+  statusEl.style.borderRadius = '8px';
   statusEl.style.display = 'none';
   if (form) form.appendChild(statusEl);
 
   function showStatus(msg, isError = false) {
+    if (!statusEl) return;
     statusEl.textContent = msg;
     statusEl.style.display = 'block';
-    statusEl.style.backgroundColor = isError ? 'rgba(239, 68, 68, 0.1)' : 'rgba(34, 197, 94, 0.1)';
-    statusEl.style.color = isError ? '#ef4444' : '#22c55e';
-    statusEl.style.border = `1px solid ${isError ? '#ef4444' : '#22c55e'}`;
+    statusEl.style.backgroundColor = isError ? 'rgba(239, 68, 68, 0.12)' : 'rgba(34, 197, 94, 0.12)';
+    statusEl.style.color = isError ? '#f87171' : '#4ade80';
+    statusEl.style.border = `1px solid ${isError ? 'rgba(239, 68, 68, 0.3)' : 'rgba(34, 197, 94, 0.3)'}`;
     
     setTimeout(() => {
-      statusEl.style.display = 'none';
+      if (statusEl) statusEl.style.display = 'none';
     }, 5000);
   }
 
-  window.handleContact = async function (e) {
+  window.handleContact = function (e) {
     e.preventDefault();
     const formEl = e.target;
-    const submitBtn = formEl.querySelector('button[type="submit"]');
-    const originalBtnText = submitBtn.innerHTML;
+    if (!formEl) return;
 
-    const name = formEl.name.value.trim();
-    const email = formEl.email.value.trim();
-    const message = formEl.message.value.trim();
+    const name = formEl.name ? formEl.name.value.trim() : '';
+    const email = formEl.email ? formEl.email.value.trim() : '';
+    const message = formEl.message ? formEl.message.value.trim() : '';
 
     if (!name || !email || !message) {
       showStatus('Please complete all fields.', true);
       return;
     }
 
-    // Disable button and show loading state
-    submitBtn.disabled = true;
-    submitBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Sending...';
+    const subject = encodeURIComponent(`Portfolio Inquiry from ${name}`);
+    const body = encodeURIComponent(`Name: ${name}\nEmail: ${email}\n\nMessage:\n${message}`);
+    const mailtoUrl = `mailto:avijitjanascience24@gmail.com?subject=${subject}&body=${body}`;
 
-    try {
-      // Improved URL detection: Use localhost if on a local file or local server
-      const isLocal = !window.location.hostname || 
-                      window.location.hostname === 'localhost' || 
-                      window.location.hostname === '127.0.0.1';
-      
-      const API_URL = isLocal ? 'http://localhost:5000/api/contact' : '/api/contact'; 
-
-      const response = await fetch(API_URL, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({ name, email, message })
-      });
-
-      const result = await response.json();
-
-      if (response.ok) {
-        showStatus('Message sent successfully! I will get back to you soon.', false);
-        formEl.reset();
-      } else {
-        showStatus(result.error || 'Failed to send message. Please try again.', true);
-      }
-    } catch (error) {
-      console.error('Contact error:', error);
-      showStatus('Network error. Is the backend server running?', true);
-    } finally {
-      submitBtn.disabled = false;
-      submitBtn.innerHTML = originalBtnText;
-    }
+    window.location.href = mailtoUrl;
+    showStatus('Opening your email client to send the message...', false);
+    formEl.reset();
   };
 
   const fixBtn = document.getElementById('fixGrammarBtn');
@@ -254,10 +232,10 @@ function initContactForm() {
             fixBtn.disabled = false;
           }, 2000);
         } else {
-          throw new Error(corrected);
+          throw new Error(corrected || 'Correction failed');
         }
       } catch (err) {
-        console.error('Grammar fix failed:', err);
+        console.warn('Grammar fix note:', err.message);
         fixBtn.innerHTML = '<i class="fa-solid fa-triangle-exclamation"></i> Error';
         setTimeout(() => {
           fixBtn.innerHTML = originalBtnText;
@@ -274,7 +252,13 @@ function initContactForm() {
 async function loadProjects() {
   try {
     const res = await fetch(PROJECTS_JSON, { cache: 'no-cache' });
+    if (!res.ok) {
+      throw new Error(`HTTP error! status: ${res.status}`);
+    }
     allProjects = await res.json();
+    if (!Array.isArray(allProjects)) {
+      allProjects = [];
+    }
     renderProjects(allProjects.slice(0, MAX_PROJECTS_DISPLAY));
     buildTagFilters(allProjects);
     initProjectSearch();
@@ -288,14 +272,14 @@ async function loadProjects() {
   }
 }
 
-/* RENDER PROJECTS: accessible grid with compact cards */
+/* RENDER PROJECTS: 3x3 GitHub Style Cards */
 function renderProjects(projects) {
   const grid = document.getElementById('projectsGrid');
   if (!grid) return;
 
   grid.innerHTML = '';
 
-  if (!projects.length) {
+  if (!Array.isArray(projects) || !projects.length) {
     grid.innerHTML = `
       <div class="no-results">
         <i class="fa-solid fa-search" style="font-size: 2rem; margin-bottom: 1rem; opacity: 0.5;"></i>
@@ -310,20 +294,24 @@ function renderProjects(projects) {
     const card = document.createElement('article');
     card.className = 'project-card';
     card.tabIndex = 0;
-    card.style.animationDelay = `${index * 0.05}s`;
+    card.style.animationDelay = `${index * 0.04}s`;
     card.innerHTML = `
-      <a class="project-media" href="${p.url || '#'}" aria-label="${escapeHtml(p.title)} - open project" target="${p.external ? '_blank' : '_self'}" rel="noopener">
-        <img loading="${index < 4 ? 'eager' : 'lazy'}" width="400" height="225" decoding="async" alt="${escapeHtml(p.imageAlt || p.title)}" src="${p.image || 'assets/images/placeholder-project.png'}" />
+      <a class="project-media" href="${p.url || p.repo || '#'}" aria-label="${escapeHtml(p.title)} - open project" target="${p.external ? '_blank' : '_self'}" rel="noopener">
+        <img loading="${index < 3 ? 'eager' : 'lazy'}" width="400" height="225" decoding="async" alt="${escapeHtml(p.imageAlt || p.title)}" src="${p.image || './assets/images/placeholder-project.png'}" />
       </a>
       <div class="project-body">
-        <h3>${escapeHtml(p.title)}</h3>
+        <div class="project-title-row">
+          <i class="fa-brands fa-github repo-mark" aria-hidden="true"></i>
+          <h3><a href="${p.url || p.repo || '#'}" target="${p.external ? '_blank' : '_self'}" rel="noopener">${escapeHtml(p.title)}</a></h3>
+        </div>
         <p class="proj-desc">${escapeHtml(p.description)}</p>
         <div class="project-meta">
           <div class="tags">${(p.tech || []).slice(0, 3).map(t =>
-      `<button class="tag" data-tag="${escapeHtml(t)}" aria-label="Filter by ${escapeHtml(t)}">${escapeHtml(t)}</button>`
+      `<button class="tag" data-tag="${escapeHtml(t)}" aria-label="Filter by ${escapeHtml(t)}"><span class="tag-dot"></span>${escapeHtml(t)}</button>`
     ).join('')}</div>
           <div class="proj-links">
             ${p.repo ? `<a href="${p.repo}" target="_blank" rel="noopener" aria-label="View source repo"><i class="fa-brands fa-github"></i></a>` : ''}
+            ${p.url && p.url !== p.repo ? `<a href="${p.url}" target="_blank" rel="noopener" aria-label="Open project demo"><i class="fa-solid fa-arrow-up-right-from-square"></i></a>` : ''}
           </div>
         </div>
       </div>
@@ -331,18 +319,22 @@ function renderProjects(projects) {
     grid.appendChild(card);
   });
 
-  // Add event delegation for tag clicks
-  grid.addEventListener('click', e => {
-    const t = e.target.closest('.tag');
-    if (t) {
-      e.preventDefault();
-      applyTagFilter(t.dataset.tag);
-    }
-  });
+  // Attach event delegation for tag clicks once to prevent listener leaks
+  if (!grid.dataset.listenerAttached) {
+    grid.addEventListener('click', e => {
+      const t = e.target.closest('.tag');
+      if (t) {
+        e.preventDefault();
+        applyTagFilter(t.dataset.tag);
+      }
+    });
+    grid.dataset.listenerAttached = 'true';
+  }
 }
 
 /* Build tag filter UI from project list */
 function buildTagFilters(projects) {
+  if (!Array.isArray(projects)) return;
   const unique = new Set(projects.flatMap(p => p.tech || []));
   const container = document.getElementById('tagFilters');
   if (!container) return;
@@ -355,7 +347,7 @@ function buildTagFilters(projects) {
   sortedTags.forEach(tag => {
     const btn = document.createElement('button');
     btn.className = 'tag';
-    btn.textContent = tag;
+    btn.innerHTML = `<span class="tag-dot"></span>${escapeHtml(tag)}`;
     btn.setAttribute('data-tag', tag);
     btn.type = 'button';
     btn.addEventListener('click', () => applyTagFilter(tag));
@@ -404,18 +396,18 @@ function initProjectSearch() {
   });
 }
 
-/* Filter logic - shows max 8 matching projects */
+/* Filter logic - shows max 9 matching projects in 3x3 grid */
 function filterProjects(query = '') {
-  const normalized = query.trim().toLowerCase();
+  const normalized = (query || '').trim().toLowerCase();
 
   let filtered;
-  if (normalized) {
+  if (normalized && Array.isArray(allProjects)) {
     filtered = allProjects.filter(p => {
       const hay = [p.title, p.description, ...(p.tech || []), ...(p.domains || [])].join(' ').toLowerCase();
       return hay.includes(normalized);
     });
   } else {
-    filtered = allProjects;
+    filtered = allProjects || [];
   }
 
   const displayed = filtered.slice(0, MAX_PROJECTS_DISPLAY);
@@ -424,7 +416,7 @@ function filterProjects(query = '') {
 }
 
 /* Update projects info text */
-function updateProjectsInfo(total, shown, searchTerm = '') {
+function updateProjectsInfo(total = 0, shown = 0, searchTerm = '') {
   const infoEl = document.getElementById('projectsInfo');
   if (!infoEl) return;
 
@@ -433,44 +425,6 @@ function updateProjectsInfo(total, shown, searchTerm = '') {
   } else {
     infoEl.innerHTML = `<span>Showing ${shown} of ${total} projects</span>`;
   }
-}
-
-/* =============================================
-   BLOG teasers loader — shows latest 3 posts only
-   ============================================= */
-async function loadBlogTeasers() {
-  try {
-    const res = await fetch(POSTS_JSON, { cache: 'no-cache' });
-    const posts = await res.json();
-
-    // Sort by date descending to get latest posts
-    const sortedPosts = posts.sort((a, b) => new Date(b.date) - new Date(a.date));
-
-    const el = document.getElementById('blogList');
-    if (!el) return;
-
-    // Render only latest 3 posts
-    el.innerHTML = renderPosts(sortedPosts.slice(0, 3));
-  } catch (err) {
-    console.error('Failed to load posts:', err);
-    const el = document.getElementById('blogList');
-    if (el) {
-      el.innerHTML = '<p class="no-results">Failed to load blog posts.</p>';
-    }
-  }
-}
-
-/* helper to render posts */
-function renderPosts(list) {
-  return list.map((p, index) => `
-    <article class="blog-teaser" aria-labelledby="post-${p.slug}" style="animation: fadeInUp 0.5s ease-out ${index * 0.1}s backwards;">
-      <h3 id="post-${p.slug}">
-        <a href="post.html?slug=${encodeURIComponent(p.slug)}">${escapeHtml(p.title)}</a>
-      </h3>
-      <p class="meta">${escapeHtml(p.date)} • ${escapeHtml(p.readingTime || '')}</p>
-      <p>${escapeHtml(p.excerpt)}</p>
-    </article>
-  `).join('');
 }
 
 /* =============================================
@@ -492,7 +446,6 @@ function escapeHtml(str = '') {
 function initDynamicGreeting() {
   const nounEl = document.getElementById('dynamic-noun');
   if (!nounEl) return;
-
 
   // Phrase config: noun, color, subtitle, active badge index
   const phrases = [
@@ -551,6 +504,7 @@ function initDynamicGreeting() {
   // Set up DOM: typewriter text + block cursor
   nounEl.innerHTML = '<span class="typewriter-text"></span><span class="block-cursor"></span>';
   const textEl = nounEl.querySelector('.typewriter-text');
+  if (!textEl) return;
 
   const subtitleEl = document.getElementById('heroSubtitle');
   const badgeGrid = document.getElementById('heroBadgeGrid');
@@ -560,6 +514,7 @@ function initDynamicGreeting() {
 
   function syncPhrase(index) {
     const phrase = phrases[index];
+    if (!phrase) return;
 
     // Update accent color
     nounEl.style.color = phrase.color;
@@ -569,9 +524,11 @@ function initDynamicGreeting() {
       subtitleEl.style.opacity = '0';
       subtitleEl.style.transform = 'translateY(10px)';
       setTimeout(() => {
-        subtitleEl.textContent = phrase.subtitle;
-        subtitleEl.style.opacity = '1';
-        subtitleEl.style.transform = 'translateY(0)';
+        if (subtitleEl) {
+          subtitleEl.textContent = phrase.subtitle;
+          subtitleEl.style.opacity = '1';
+          subtitleEl.style.transform = 'translateY(0)';
+        }
       }, 200);
     }
 
@@ -582,7 +539,6 @@ function initDynamicGreeting() {
         badge.classList.remove('active');
         if (i === phrase.badgeIndex) {
           badge.classList.add('active');
-          // Update icon and text
           const icon = badge.querySelector('i');
           const span = badge.querySelector('span');
           if (icon) icon.className = phrase.badgeIcon;
@@ -593,7 +549,9 @@ function initDynamicGreeting() {
   }
 
   function typeWriter() {
+    if (!textEl) return;
     const currentPhrase = phrases[phraseIndex];
+    if (!currentPhrase) return;
 
     if (isPaused) return;
 

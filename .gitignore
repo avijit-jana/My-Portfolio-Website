@@ -1,8 +1,7 @@
-Others/
+# Operating System files
+.DS_Store
+Thumbs.db
+
+# Secrets & local workspace
 secrets/
-backend/.env
-myenv/
-venv/
-__pycache__/
-*.pyc
-.vercel
+Changes/

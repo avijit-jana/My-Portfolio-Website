@@ -1,5 +1,4 @@
 # robots.txt — avijit-jana.github.io
-# Last updated: 2026-04-20
 
 User-agent: *
 Allow: /
@@ -12,11 +11,9 @@ User-agent: Bingbot
 Allow: /
 
 # Disallow non-content paths and system directories
-Disallow: /scripts/
-Disallow: /logs/
 Disallow: /secrets/
 Disallow: /.git/
 Disallow: /.github/
 
 # Sitemap declaration
-Sitemap: /sitemap.xml
+Sitemap: https://avijit-jana.github.io/sitemap.xml

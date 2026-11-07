@@ -58,11 +58,11 @@
     rel="stylesheet">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css"
     crossorigin="anonymous" referrerpolicy="no-referrer" />
-  <link rel="icon" type="image/x-icon" href="favicon.ico">
-  <link rel="icon" type="image/png" href="assets/images/my_pic.png">
-  <link rel="preload" as="image" href="assets/images/my_pic.png">
+  <link rel="icon" type="image/x-icon" href="./favicon.ico">
+  <link rel="icon" type="image/png" href="./assets/images/my_pic.png">
+  <link rel="preload" as="image" href="./assets/images/my_pic.png">
   <!-- Main CSS -->
-  <link rel="stylesheet" href="assets/css/style.css">
+  <link rel="stylesheet" href="./assets/css/style.css">
 
   <!-- Google Analytics (GA4) — Replace MEASUREMENT_ID -->
   <!-- Google Analytics (GA4) — Uncomment and replace MEASUREMENT_ID when ready -->
@@ -77,7 +77,7 @@
   <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/0.160.0/three.min.js"></script>
 </head>
 
-<body class="theme-light">
+<body class="theme-dark">
   <!-- Skip link for keyboard users (accessibility) -->
   <a class="skip-link" href="#maincontent">Skip to content</a>
 
@@ -86,8 +86,8 @@
       <div id="scrollProgress" class="scroll-progress-bar"></div>
     </div>
     <div class="container header-inner">
-      <a class="brand" href="/" aria-label="Homepage">
-        <img src="assets/images/logo.png" alt="Avijit Jana brand logo" class="brand-img" width="44" height="44"
+      <a class="brand" href="./" aria-label="Homepage">
+        <img src="./assets/images/logo.png" alt="Avijit Jana brand logo" class="brand-img" width="44" height="44"
           loading="eager" />
         <span class="brand-name">Avijit Jana</span>
       </a>
@@ -101,9 +101,8 @@
           <li><a href="#about">About</a></li>
           <li><a href="#skills">Skills</a></li>
           <li><a href="#projects">Projects</a></li>
-          <li><a href="blog.html">Blog</a></li>
           <li><a href="#contact">Contact</a></li>
-          <li><a href="assets/My_Resume.pdf" target="_blank" rel="noopener">Resume</a></li>
+          <li><a href="./assets/My_Resume.pdf" target="_blank" rel="noopener">Resume</a></li>
         </ul>
         <div class="header-actions">
           <div class="header-socials">
@@ -162,7 +161,7 @@
               <i class="fa-solid fa-folder-open" aria-hidden="true"></i>
               View Projects
             </a>
-            <a class="btn hero-outline-btn" href="assets/My_Resume.pdf" aria-label="Download professional resume (PDF)">
+            <a class="btn hero-outline-btn" href="./assets/My_Resume.pdf" aria-label="Download professional resume (PDF)">
               <i class="fa-solid fa-download" aria-hidden="true"></i>
               Download Resume
             </a>
@@ -170,7 +169,7 @@
         </div>
         <figure class="hero-image" aria-hidden="true" id="heroImageContainer">
           <div id="hero-canvas-container"></div>
-          <img src="assets/images/my_pic.png" alt="Professional portrait of Avijit Jana" width="380" height="380"
+          <img src="./assets/images/my_pic.png" alt="Professional portrait of Avijit Jana" width="380" height="380"
             loading="eager" fetchpriority="high" />
         </figure>
       </div>
@@ -291,7 +290,7 @@
       </div>
     </section>
 
-    <!-- Projects (dynamic - 4x2 grid with search) -->
+    <!-- Projects (dynamic - 3x3 grid with search) -->
     <section id="projects" class="container projects" aria-labelledby="projects-heading">
       <h2 id="projects-heading">Featured Projects</h2>
 
@@ -305,7 +304,7 @@
         <div class="tag-filters" role="group" aria-label="Filter by tags" id="tagFilters"></div>
       </div>
 
-      <!-- Grid (8 projects max displayed) -->
+      <!-- Grid (3x3 grid - 9 projects max displayed) -->
       <div id="projectsGrid" class="project-grid" aria-live="polite">
         <!-- JS renders projects here -->
       </div>
@@ -313,19 +312,6 @@
       <!-- Projects Info -->
       <div class="projects-info" id="projectsInfo">
         <span>Loading projects...</span>
-      </div>
-    </section>
-
-    <section id="blog" class="container blog" aria-labelledby="blog-heading">
-      <h2 id="blog-heading" class="section-title-center">Latest from the Blog</h2>
-      <div id="blogList" class="blog-list" aria-live="polite">
-        <!-- JS will insert latest 3 blog post teasers -->
-      </div>
-      <div class="blog-cta">
-        <a href="blog.html" class="btn primary">
-          <i class="fa-solid fa-newspaper" aria-hidden="true"></i>
-          View All Blogs
-        </a>
       </div>
     </section>
 
@@ -471,16 +457,16 @@
           <a href="#">Terms of Service</a>
         </div>
         <button class="back-to-top" id="backToTop" aria-label="Back to top">
-          Back to top <i class="fa-solid fa-arrow-up" aria-hidden="true"></i>
+          <span class="back-to-top-text">Back to top</span>
+          <i class="fa-solid fa-arrow-up" aria-hidden="true"></i>
         </button>
       </div>
     </div>
   </footer>
 
-  <!-- Marked (markdown parser) & main JS -->
-  <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
-  <script src="assets/js/main.js" type="module"></script>
-  <script src="assets/js/hero-animation.js"></script>
+  <!-- Main Scripts -->
+  <script src="./assets/js/main.js" type="module"></script>
+  <script src="./assets/js/hero-animation.js"></script>
 </body>
 
 </html>
