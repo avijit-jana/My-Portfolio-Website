@@ -4,21 +4,23 @@
 <head>
   <!-- Basic meta -->
   <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <meta http-equiv="x-ua-compatible" content="ie=edge" />
   <title>Avijit Jana — Data Scientist | Portfolio</title>
   <meta name="description"
     content="Avijit Jana — Expert Data Scientist & ML Engineer. Specializing in MLOps, LLMs, RAG applications, and production-ready AI solutions. Hire for machine learning consulting, predictive modeling, and data engineering.">
 
   <!-- Canonical -->
-  <link rel="canonical" href="https://avijit-jana.github.io/" />
+  <link rel="canonical" href="https://avijitjana.vercel.app/" />
+  <link rel="me" href="https://avijitjana.vercel.app/" />
 
   <!-- Open Graph -->
   <meta property="og:type" content="website" />
   <meta property="og:title" content="Avijit Jana — Data Scientist | Portfolio" />
   <meta property="og:description"
     content="Portfolio showcasing data science, machine learning, and analytics projects." />
-  <meta property="og:url" content="https://avijit-jana.github.io/" />
+  <meta property="og:url" content="https://avijitjana.vercel.app/" />
+  <meta property="og:see_also" content="https://avijit-jana.github.io/" />
   <meta property="og:site_name" content="Avijit Jana — Data Scientist" />
   <meta property="og:image" content="https://avijit-jana.github.io/assets/images/my_pic.png" />
   <meta name="google-site-verification" content="j3XqUoNIyJE90jhMHNSrwDG09jqtZYIIESXyhnAPkBQ" />
@@ -30,6 +32,7 @@
   <meta name="twitter:title" content="Avijit Jana — Data Scientist | Portfolio" />
   <meta name="twitter:description"
     content="Portfolio showcasing data science, machine learning, and analytics projects." />
+  <meta name="twitter:url" content="https://avijitjana.vercel.app/" />
   <meta name="twitter:image" content="https://avijit-jana.github.io/assets/images/my_pic.png" />
 
   <!-- SEO: index/follow -->
@@ -41,10 +44,11 @@
     "@context": "https://schema.org",
     "@type": "Person",
     "name": "Avijit Jana",
-    "url": "https://avijit-jana.github.io/",
+    "url": "https://avijitjana.vercel.app/",
     "sameAs": [
       "https://github.com/avijit-jana",
-      "https://www.linkedin.com/in/avijit-jana"
+      "https://www.linkedin.com/in/avijit-jana",
+      "https://avijit-jana.github.io/"
     ],
     "jobTitle": "Data Scientist",
     "description": "Data Scientist specializing in machine learning, analytics, and production-ready data solutions."
@@ -75,15 +79,23 @@
   <!-- Skip link for keyboard users (accessibility) -->
   <a class="skip-link" href="#maincontent">Skip to content</a>
 
+  <div class="portfolio-utility-bar">
+    <a href="https://avijitjana.vercel.app/" target="_blank" rel="noopener">
+      Viewing the static edition — Explore My Official Portfolio →
+    </a>
+  </div>
+
   <header class="site-header" role="banner" aria-label="Main header">
-    <div class="scroll-progress-container">
-      <div id="scrollProgress" class="scroll-progress-bar"></div>
-    </div>
     <div class="container header-inner">
-      <a class="brand" href="./" aria-label="Homepage">
-        <img src="./assets/images/logo.png" alt="AJ Logo" class="brand-img" width="40" height="40"
-          loading="eager" />
-        <span class="brand-name">Avijit Jana</span>
+      <div class="scroll-progress-container">
+        <div id="scrollProgress" class="scroll-progress-bar"></div>
+      </div>
+      <a class="brand" href="#home" aria-label="Avijit Jana homepage">
+        <span class="brand-mark" aria-hidden="true">AJ</span>
+        <span class="brand-copy">
+          <span class="brand-name">Avijit Jana</span>
+          <span class="brand-subtitle">Developer Portfolio</span>
+        </span>
       </a>
 
       <nav class="site-nav" role="navigation" aria-label="Primary navigation">
@@ -92,32 +104,20 @@
           <i class="fa fa-bars" aria-hidden="true"></i>
         </button>
         <ul id="mainnav" class="nav-list">
+          <li><a href="#home" class="active">Home</a></li>
           <li><a href="#about">About</a></li>
           <li><a href="#skills">Skills</a></li>
           <li><a href="#projects">Projects</a></li>
-          <li><a href="#contact">Contact</a></li>
+          <li><a href="#faq">FAQ</a></li>
         </ul>
-        <div class="header-actions">
-          <div class="header-socials">
-            <a href="https://github.com/avijit-jana" aria-label="GitHub" target="_blank" rel="noopener">
-              <i class="fa-brands fa-github"></i>
-            </a>
-            <a href="https://www.linkedin.com/in/avijit-jana" aria-label="LinkedIn" target="_blank" rel="noopener">
-              <i class="fa-brands fa-linkedin"></i>
-            </a>
-          </div>
-          <button id="themeToggle" class="theme-toggle" aria-label="Toggle theme">
-            <i class="fa-solid fa-moon" aria-hidden="true"></i>
-          </button>
-          <a href="#contact" class="btn primary header-cta">Hire Me</a>
-        </div>
       </nav>
+      <a href="#contact" class="nav-cta">Let's Connect <span aria-hidden="true">↗</span></a>
     </div>
   </header>
 
   <main id="maincontent" role="main">
     <!-- Hero / Landing -->
-    <section class="hero-section" aria-labelledby="hero-heading">
+    <section id="home" class="hero-section" aria-labelledby="hero-heading">
       <div class="hero-container">
         <div class="hero-content">
           <span class="hero-badge">
@@ -321,66 +321,79 @@
             <p>I'm available for collaboration, consulting, or tackling data science challenges. Whether it's a project,
               an
               idea, or a new opportunity — I'd love to hear from you.</p>
+            <a class="contact-portfolio-cta" href="https://avijitjana.vercel.app/" target="_blank"
+              rel="noopener">
+              Open My Official Portfolio <span aria-hidden="true">↗</span>
+            </a>
           </div>
 
-          <form class="contact-form" onsubmit="handleContact(event)" aria-label="Contact form">
-            <div class="form-row">
-              <div class="form-group">
-                <label for="name">Name</label>
-                <input id="name" name="name" required placeholder="Your name" autocomplete="name" />
-              </div>
-              <div class="form-group">
-                <label for="email">Email</label>
-                <input id="email" name="email" type="email" required placeholder="Your email" autocomplete="email" />
-              </div>
-            </div>
-
-            <div class="form-group">
-              <label for="message">Message</label>
-              <textarea id="message" name="message" rows="5" required
-                placeholder="Tell me about your project or idea or whatever is on your mind..."></textarea>
-              <button type="button" id="fixGrammarBtn" class="btn-text"
-                style="margin-top: 0.5rem; font-size: 0.85rem; color: var(--accent-primary); display: flex; align-items: center; gap: 0.25rem;">
-                <i class="fa-solid fa-wand-magic-sparkles"></i>
-                Fix Grammar
-              </button>
-            </div>
-
-            <div class="form-actions">
-              <button type="submit" class="btn primary">
-                <i class="fa-solid fa-paper-plane" aria-hidden="true"></i>
-                Send Message
-              </button>
-              <a href="https://mail.google.com/mail/?view=cm&fs=1&to=avijitjanascience24@gmail.com" target="_blank"
-                rel="noopener noreferrer" class="btn outline">
-                <i class="fa-solid fa-envelope" aria-hidden="true"></i>
-                Or email me
-              </a>
-            </div>
-          </form>
+          <div class="contact-actions">
+            <a class="btn primary" href="mailto:avijitjanascience24@gmail.com">Email Me ↗</a>
+            <button class="btn secondary" type="button" id="copyEmailBtn"
+              data-email="avijitjanascience24@gmail.com" aria-live="polite">Copy Email</button>
+          </div>
+          <nav class="contact-social-links" aria-label="Social profiles">
+            <a href="https://github.com/avijit-jana" aria-label="GitHub" target="_blank" rel="noopener">
+              <i class="fa-brands fa-github" aria-hidden="true"></i>
+            </a>
+            <a href="https://www.linkedin.com/in/avijit-jana" aria-label="LinkedIn" target="_blank" rel="noopener">
+              <i class="fa-brands fa-linkedin" aria-hidden="true"></i>
+            </a>
+          </nav>
         </div>
       </div>
     </section>
     <!-- SEO FAQ Section -->
-    <section class="container faq-section" aria-labelledby="faq-heading">
+    <section id="faq" class="container faq-section" aria-labelledby="faq-heading">
       <h2 id="faq-heading">Data Science & AI Solutions FAQ</h2>
       <div class="faq-grid">
         <div class="faq-item">
-          <h3>What services do you provide as a Data Scientist?</h3>
-          <p>I specialize in <b>machine learning engineering</b>, <b>MLOps implementation</b>, and building <b>custom AI
-              agents</b> using RAG (Retrieval Augmented Generation). This includes everything from data cleaning to
-            model deployment on AWS/GCP.</p>
+          <h3>What services do you provide as an AI &amp; Data Science Engineer?</h3>
+          <p>I specialize in <b>machine learning engineering</b>, <b>end-to-end MLOps</b>, and <b>custom AI agents</b>
+            powered by RAG (Retrieval-Augmented Generation)—covering everything from data pipelines to scalable cloud
+            deployment.</p>
         </div>
         <div class="faq-item">
           <h3>How do you approach a Machine Learning project?</h3>
-          <p>My workflow follows a rigorous <b>MLOps lifecycle</b>: starting with business objective alignment, followed
-            by exploratory data analysis (EDA), iterative modeling, and finally productionizing the solution with robust
-            monitoring.</p>
+          <p>My workflow follows a structured <b>MLOps lifecycle</b>: aligning on business KPIs, performing exploratory
+            data analysis (EDA), iterative model experimentation, and deploying containerized APIs with
+            <b>automated monitoring</b>.</p>
         </div>
         <div class="faq-item">
-          <h3>Do you work with LLMs and Generative AI?</h3>
-          <p>Yes, I build <b>production-ready LLM applications</b>, focusing on fine-tuning, prompt engineering, and
-            integrating <b>Vector Databases</b> (like Pinecone or ChromaDB) for scalable AI solutions.</p>
+          <h3>Do you build production LLM and Generative AI systems?</h3>
+          <p>Yes. I architect <b>production-ready LLM applications</b> using prompt engineering, domain fine-tuning,
+            evaluation guardrails, and <b>Vector Databases</b> (Pinecone, ChromaDB, pgvector) for low-latency retrieval.</p>
+        </div>
+        <div class="faq-item">
+          <h3>Which cloud platforms and MLOps tools do you use?</h3>
+          <p>I deploy primarily on <b>AWS and GCP</b> using Docker, FastAPI, GitHub Actions CI/CD, and
+            <b>automated model registries</b> to ensure reproducible builds and zero-downtime updates.</p>
+        </div>
+        <div class="faq-item">
+          <h3>How do you handle data privacy and model reliability?</h3>
+          <p>I implement <b>strict data sanitization</b>, role-based access controls, hallucination checks, and
+            <b>drift detection alerts</b> so AI systems remain secure, auditable, and accurate in production.</p>
+        </div>
+        <div class="faq-item">
+          <h3>Can you integrate AI models into existing web apps?</h3>
+          <p>Yes. Beyond modeling, I build <b>full-stack AI integrations</b>—connecting Python ML backends and LLM
+            pipelines directly into modern web interfaces with streaming responses and usage analytics.</p>
+        </div>
+        <div class="faq-item">
+          <h3>What engagement models are you available for?</h3>
+          <p>I am available for <b>full-time AI/MLOps roles</b>, <b>technical consulting</b>, and
+            <b>end-to-end freelance builds</b>, adapting smoothly to agile product teams or standalone founder-led MVPs.</p>
+        </div>
+        <div class="faq-item">
+          <h3>What deliverables do clients receive at project handoff?</h3>
+          <p>Every engagement includes <b>clean, documented source code</b>, reproducible deployment scripts,
+            architecture diagrams, and a <b>handoff walkthrough</b> so your team owns the system completely.</p>
+        </div>
+        <div class="faq-item">
+          <h3>Where can I test interactive demos of your AI systems?</h3>
+          <p>You can explore live architecture breakdowns and interactive project previews on my primary portfolio at
+            <a class="faq-link" href="https://avijitjana.vercel.app/" target="_blank" rel="noopener">
+              https://avijitjana.vercel.app/</a>, or reach out directly via email to discuss a custom use case.</p>
         </div>
       </div>
     </section>
@@ -424,6 +437,8 @@
             <li><a href="#projects">Projects</a></li>
             <li><a href="#skills">Skills</a></li>
             <li><a href="#contact">Contact</a></li>
+            <li><a href="https://avijitjana.vercel.app/" target="_blank" rel="noopener">
+              My Official Portfolio</a></li>
           </ul>
         </div>
 

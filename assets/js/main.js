@@ -1,6 +1,5 @@
 // assets/js/main.js
 // ES module. Modern browsers supported by GitHub Pages.
-import { fixGrammar } from './grammer.js';
 
 // Responsibilities:
 // - High-performance scroll tracking (progress bar + back-to-top via RAF compositor transform)
@@ -8,7 +7,7 @@ import { fixGrammar } from './grammer.js';
 // - Fast projects loader with precomputed search index & DocumentFragment batch rendering
 // - Visibility-aware dynamic hero greeting (pauses off-screen to preserve CPU/battery)
 // - Mobile navigation with smooth anchor scrolling
-// - Contact mailto & grammar helper with timeout safety
+// - Contact email and clipboard actions
 
 const PROJECTS_JSON = './assets/js/projects.json';
 const MAX_PROJECTS_DISPLAY = 9; // 3x3 grid
@@ -21,7 +20,7 @@ document.addEventListener('DOMContentLoaded', () => {
   initUnifiedScroll();
   initActiveNav();
   loadProjects();
-  initContactForm();
+  initContactActions();
   initDynamicGreeting();
   initFooterYear();
 });
@@ -177,19 +176,7 @@ function initNavToggle() {
 
   // Close menu and smooth scroll when clicking a link
   nav.querySelectorAll('a').forEach(link => {
-    link.addEventListener('click', (e) => {
-      const href = link.getAttribute('href');
-      if (href && href.startsWith('#') && href.length > 1) {
-        try {
-          const target = document.querySelector(href);
-          if (target) {
-            e.preventDefault();
-            target.scrollIntoView({ behavior: 'smooth' });
-          }
-        } catch (_) {
-          // Fallback to default browser anchor behavior
-        }
-      }
+    link.addEventListener('click', () => {
       btn.setAttribute('aria-expanded', 'false');
       nav.classList.remove('open');
     });
@@ -197,87 +184,29 @@ function initNavToggle() {
 }
 
 /* =============================================
-   CONTACT form handler
+   CONTACT email actions
    ============================================= */
-function initContactForm() {
-  const form = document.querySelector('.contact-form');
-  const statusEl = document.createElement('div');
-  statusEl.id = 'formStatus';
-  statusEl.style.marginTop = '1rem';
-  statusEl.style.padding = '0.75rem';
-  statusEl.style.borderRadius = '8px';
-  statusEl.style.display = 'none';
-  if (form) form.appendChild(statusEl);
+function initContactActions() {
+  const copyButton = document.getElementById('copyEmailBtn');
+  if (!copyButton) return;
 
-  function showStatus(msg, isError = false) {
-    if (!statusEl) return;
-    statusEl.textContent = msg;
-    statusEl.style.display = 'block';
-    statusEl.style.backgroundColor = isError ? 'rgba(239, 68, 68, 0.12)' : 'rgba(34, 197, 94, 0.12)';
-    statusEl.style.color = isError ? '#f87171' : '#4ade80';
-    statusEl.style.border = `1px solid ${isError ? 'rgba(239, 68, 68, 0.3)' : 'rgba(34, 197, 94, 0.3)'}`;
-    
-    setTimeout(() => {
-      if (statusEl) statusEl.style.display = 'none';
-    }, 5000);
-  }
+  const email = copyButton.dataset.email;
+  let resetTimeout;
 
-  window.handleContact = function (e) {
-    e.preventDefault();
-    const formEl = e.target;
-    if (!formEl) return;
-
-    const name = formEl.name ? formEl.name.value.trim() : '';
-    const email = formEl.email ? formEl.email.value.trim() : '';
-    const message = formEl.message ? formEl.message.value.trim() : '';
-
-    if (!name || !email || !message) {
-      showStatus('Please complete all fields.', true);
-      return;
+  copyButton.addEventListener('click', async () => {
+    try {
+      await navigator.clipboard.writeText(email);
+      copyButton.textContent = 'Copied ✓';
+    } catch (error) {
+      console.error('Could not copy the contact email:', error);
+      copyButton.textContent = 'Copy failed';
     }
 
-    const subject = encodeURIComponent(`Portfolio Inquiry from ${name}`);
-    const body = encodeURIComponent(`Name: ${name}\nEmail: ${email}\n\nMessage:\n${message}`);
-    const mailtoUrl = `mailto:avijitjanascience24@gmail.com?subject=${subject}&body=${body}`;
-
-    window.location.href = mailtoUrl;
-    showStatus('Opening your email client to send the message...', false);
-    formEl.reset();
-  };
-
-  const fixBtn = document.getElementById('fixGrammarBtn');
-  const messageArea = document.getElementById('message');
-  if (fixBtn && messageArea) {
-    fixBtn.addEventListener('click', async () => {
-      const originalText = messageArea.value.trim();
-      if (!originalText) return;
-
-      fixBtn.disabled = true;
-      const originalBtnText = fixBtn.innerHTML;
-      fixBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Fixing...';
-
-      try {
-        const corrected = await fixGrammar(originalText);
-        if (corrected && !corrected.startsWith('Error:')) {
-          messageArea.value = corrected;
-          fixBtn.innerHTML = '<i class="fa-solid fa-check"></i> Fixed!';
-          setTimeout(() => {
-            fixBtn.innerHTML = originalBtnText;
-            fixBtn.disabled = false;
-          }, 2000);
-        } else {
-          throw new Error(corrected || 'Correction failed');
-        }
-      } catch (err) {
-        console.warn('Grammar fix note:', err.message);
-        fixBtn.innerHTML = '<i class="fa-solid fa-triangle-exclamation"></i> Error';
-        setTimeout(() => {
-          fixBtn.innerHTML = originalBtnText;
-          fixBtn.disabled = false;
-        }, 2000);
-      }
-    });
-  }
+    window.clearTimeout(resetTimeout);
+    resetTimeout = window.setTimeout(() => {
+      copyButton.textContent = 'Copy Email';
+    }, 2000);
+  });
 }
 
 /* =============================================
